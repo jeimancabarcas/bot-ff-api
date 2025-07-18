@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: p2p_arbitrage_db
+    environment:
+      POSTGRES_DB: p2p_arbitrage
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: '1914'
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - p2p_network
+
+  api:
+    build: .
+    container_name: p2p_arbitrage_api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=p2p_arbitrage_db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD='1914'
+      - DB_NAME=p2p_arbitrage
+    depends_on:
+      - postgres
+    networks:
+      - p2p_network
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:
+
+networks:
+  p2p_network:
+    driver: bridge

@@ -30,7 +30,7 @@ export class OrderBookQueryDto {
   @IsString()
   symbol: string;
 
-  @ApiProperty({ enum: [5, 10, 20], description: 'Límites permitidos' })
+  @ApiProperty({ enum: [5, 10, 20], description: 'allowed limits ' })
   @IsOptional()
   @Type(() => Number)
   @IsIn([5, 10, 20], {

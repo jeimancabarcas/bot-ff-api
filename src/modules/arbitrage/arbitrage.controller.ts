@@ -33,6 +33,7 @@ import {
   QueryDtoWalletBybit,
 } from '../balance/dto/query.wallet.dto';
 import { WalletBalanceV5 } from 'bybit-api';
+import { QueryFundingBitgetDto } from './dto/query.bitget.dto';
 
 @ApiTags('arbitrage')
 @Controller('arbitrage')
@@ -244,6 +245,54 @@ export class ArbitrageController {
       apiKey,
       apiSecret,
       apiPass,
+    );
+  }
+
+  @Get('Funding-Rate-Bitget')
+  @ApiOperation({ summary: 'Get Funding Rate Bitget' })
+  @ApiResponse({
+    status: 200,
+    description: 'Funding Rate - Bitget',
+  })
+  @ApiQuery({
+    name: 'apiKey',
+    required: true,
+    description: 'Bitget API Key',
+  })
+  @ApiQuery({
+    name: 'apiSecret',
+    required: true,
+    description: 'Bitget API Secret',
+  })
+  @ApiQuery({
+    name: 'apiPass',
+    required: true,
+    description: 'Bitget API apiPass',
+  })
+  @ApiQuery({
+    name: 'symbol',
+    required: true,
+    description: 'Bitget API symbol',
+  })
+  @ApiQuery({
+    name: 'productType',
+    required: true,
+    description: 'Bitget API productType',
+  })
+  async getFundingRateBitget(
+    @Query() query: QueryFundingBitgetDto,
+  ): Promise<any> {
+    const apiKey = query.apiKey;
+    const apiSecret = query.apiSecret;
+    const apiPass = query.apiPass;
+    const symbol = query.symbol;
+    const productType = query.productType;
+    return await this.arbitrageService.getFundingRateBitget(
+      apiKey,
+      apiSecret,
+      apiPass,
+      symbol,
+      productType,
     );
   }
 }

@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ArbitrageOpportunity } from '../database/entities/arbitrage-opportunity.entity';
@@ -15,6 +21,7 @@ import { ExchangeConnectionException } from 'src/exceptions/exchange.exceptions'
 import { ResponseBybitfundingRate } from '../exchanges/interfaces/bybit.types.interface';
 import { EXCHANGES_CONFIG } from 'src/config/exchanges.config';
 import { ConfigService } from '@nestjs/config';
+import { FuturesProductTypeV2, RestClientV2 } from 'bitget-api';
 
 interface IArbitrageCalculation {
   asset: string;
@@ -28,6 +35,11 @@ interface IArbitrageCalculation {
   buyOrder: P2POrder;
   sellOrder: P2POrder;
 }
+type ResponseRate = {
+  symbol: string;
+  fundingRate: string;
+  nextFundingTime: string;
+};
 
 @Injectable()
 export class ArbitrageService {
@@ -311,6 +323,62 @@ export class ArbitrageService {
       } else {
         throw new BadRequestException('Ocurrio un error inesperado');
       }
+    }
+  }
+
+  async getFundingRateBitget(
+    apiKey: string,
+    apiSecret: string,
+    apiPass: string,
+    symbol: string,
+    productType: FuturesProductTypeV2,
+  ): Promise<ResponseRate> {
+    const client = new RestClientV2({
+      apiKey,
+      apiSecret,
+      apiPass,
+    });
+
+    try {
+      const [rateRes, timeRes] = await Promise.all([
+        client.getFuturesCurrentFundingRate({
+          symbol,
+          productType,
+        }),
+        client.getFuturesNextFundingTime({
+          symbol,
+          productType,
+        }),
+      ]);
+
+      if (
+        !rateRes.data ||
+        rateRes.data.length === 0 ||
+        timeRes.data.length === 0
+      ) {
+        throw new HttpException(
+          `Bitget funding rate empty ${rateRes.msg} ${timeRes.msg}`,
+          HttpStatus.NO_CONTENT,
+        );
+      }
+      //Convierte a objeto
+      const fundingRate = rateRes.data.reduce((f) => ({
+        symbol: f.symbol,
+        fundingRate: f.fundingRate,
+      }));
+      //Array de solo time
+      const fundingTime = timeRes.data.map((ft) => ft.nextFundingTime);
+      //Retorna un objeto combinado
+      return {
+        fundingRate: `${parseFloat(fundingRate.fundingRate).toFixed(4)} %`,
+        symbol: fundingRate.symbol,
+        nextFundingTime: new Date(Number(fundingTime)).toLocaleString(),
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Bitget funding-rate Error: ${error}`,
+        HttpStatus.BAD_GATEWAY,
+      );
     }
   }
 }

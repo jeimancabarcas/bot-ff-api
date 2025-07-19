@@ -1,15 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import axios, { AxiosInstance } from 'axios';
 import {
   BinanceAdv,
   BinanceP2PResponse,
 } from '../interfaces/binance.types.interface';
 
-import {
-  ExchangeConnectionException,
-  InvalidOrderDataException,
-  ExchangeException,
-} from '../../../exceptions/exchange.exceptions';
 import { EXCHANGES_CONFIG } from 'src/config/exchanges.config';
 
 @Injectable()
@@ -56,18 +51,16 @@ export class BinanceService {
         const info = response.data;
 
         if (info.code !== '000000') {
-          throw new ExchangeException(
-            'Binance: not dates in the response',
-            info.msg as string,
-            info.code,
-            response.status,
+          throw new HttpException(
+            `Binance: ${info.msg} - ${info.code} `,
+            HttpStatus.NON_AUTHORITATIVE_INFORMATION,
           );
         }
 
         if (!info.data || info.data.length === 0) {
-          throw new InvalidOrderDataException(
-            'Binance',
-            'No se encontraron ofertas de P2P Binance',
+          throw new HttpException(
+            `No se encontraron ofertas de P2P Binance ${info.msg}`,
+            HttpStatus.NO_CONTENT,
           );
         }
 
@@ -90,9 +83,10 @@ export class BinanceService {
 
       return dataMark;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        throw new ExchangeConnectionException('Binance: ', error);
-      }
+      throw new HttpException(
+        `Binance Error: ${error}`,
+        HttpStatus.BAD_GATEWAY,
+      );
     }
   }
 

@@ -3,10 +3,9 @@ import { DatabaseModule } from '../database/database.module';
 import { ExchangesModule } from '../exchanges/exchanges.module';
 import { ArbitrageController } from './arbitrage.controller';
 import { ArbitrageService } from './arbitrage.service';
-import { BalanceModule } from '../balance/balance.module';
 
 @Module({
-  imports: [DatabaseModule, ExchangesModule, BalanceModule],
+  imports: [DatabaseModule, ExchangesModule],
   providers: [ArbitrageService],
   controllers: [ArbitrageController],
   exports: [ArbitrageService],

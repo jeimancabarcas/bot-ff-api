@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import axios from 'axios';
 import { EXCHANGES_CONFIG } from 'src/config/exchanges.config';
 import { ExchangeConnectionException } from 'src/exceptions/exchange.exceptions';
@@ -8,6 +13,10 @@ import {
   OrdersBookBids,
   OrdersBookAsk,
 } from '../exchanges/interfaces/binance.types.interface';
+import { CategoryV5, GetOrderbookParamsV5, RestClientV5 } from 'bybit-api';
+import { OrderBookResponse } from './interfaces/bybit.interfaces';
+import { RestClientV2 } from 'bitget-api';
+import { OrderBookResponsBitget } from './interfaces/bitget.interfaces';
 
 @Injectable()
 export class OrderbookService {
@@ -64,6 +73,76 @@ export class OrderbookService {
       } else {
         throw new BadRequestException('Ocurrio un error inesperado');
       }
+    }
+  }
+
+  async getOrderBookBybit(
+    category: CategoryV5,
+    symbol: string,
+    limit: number,
+  ): Promise<OrderBookResponse> {
+    const client = new RestClientV5();
+    const params: GetOrderbookParamsV5 = {
+      category,
+      symbol,
+      limit,
+    };
+    try {
+      const res = await client.getOrderbook(params);
+      if (!res.result || res.retCode === 400) {
+        throw new HttpException(
+          `OrderBook not found: ${res.retMsg}`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      return {
+        symbol: res.result.s,
+        bids: res.result.b.map((b) => [
+          `USDTprice ${b[0]}`,
+          `BTCquantity${b[1]}`,
+        ]),
+        ask: res.result.a.map((a) => [
+          `USDTprice ${a[0]}`,
+          `BTCquantity${a[1]}`,
+        ]),
+      };
+    } catch (error) {
+      throw new HttpException(`Error Bybit: ${error}`, HttpStatus.BAD_GATEWAY);
+    }
+  }
+
+  async getOrderBookBitget(
+    symbol: string,
+    type?: string,
+    limit?: string,
+  ): Promise<OrderBookResponsBitget> {
+    const client = new RestClientV2();
+    const params = {
+      symbol,
+      type,
+      limit,
+    };
+    try {
+      const res = await client.getSpotOrderBookDepth(params);
+      if (!res.data || res.code === '400') {
+        throw new HttpException(
+          `Bitget Not Data: ${res.msg}`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      return {
+        symbol: symbol,
+        bids: res.data.bids.map((b) => [
+          `USDTprice: ${b[0]}`,
+          `BTCquantity: ${b[1]}`,
+        ]),
+        asks: res.data.asks.map((a) => [
+          `USDTprice: ${a[0]}`,
+          `BTCquantity: ${a[1]}`,
+        ]),
+      };
+    } catch (error) {
+      throw new HttpException(`Bitget Error: ${error}`, HttpStatus.BAD_GATEWAY);
     }
   }
 }

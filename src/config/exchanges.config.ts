@@ -2,7 +2,7 @@ export const EXCHANGES_CONFIG = {
   binance: {
     name: 'Binance',
     baseUrlp2p: 'https://p2p.binance.com/',
-    baseUrlFapi: 'https://fapi.binance.com',
+    baseUrlFapi: 'https://fapi.binance.com/',
     baseUrlBalanceSpot: 'https://api.binance.com',
     rateLimit: 1200, // requests per minute
     endPoints: {
@@ -11,7 +11,7 @@ export const EXCHANGES_CONFIG = {
       orderBook: 'fapi/v1/depth',
       balanceFuture: '/fapi/v2/account',
       balanceSpot: '/api/v3/account',
-      order: '/fapi/v1/order',
+      order: 'fapi/v1/order',
     },
   },
   bybit: {

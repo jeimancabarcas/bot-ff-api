@@ -8,7 +8,7 @@ import { QueryOrderFutures } from './dto/query.order';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @Get('orders/webSocket/start')
+  @Get('webSocket/start')
   @ApiResponse({
     status: 200,
     description: 'Start WebSocket Binance, created order futures',
@@ -18,7 +18,7 @@ export class OrdersController {
     return this.ordersService.startWebsocketOrder(symbol, quantity);
   }
 
-  @Get('orders/webSocket/stop')
+  @Get('webSocket/stop')
   @ApiResponse({
     status: 200,
     description: 'Stop WebSocket Binance',

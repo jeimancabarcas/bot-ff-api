@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import {
   positionSide,
   ResponseDataWebsocket,
@@ -74,35 +75,58 @@ export class OrdersService {
     });
 
     ws.on('message', (data: ResponseDataWebsocket) => {
-      const fundingRate = parseFloat(data.r);
-      const fundingTime = data.T;
-      const now = Date.now();
-      const beforeFunding = fundingTime - now;
+      let raw: string;
 
+      if (typeof data === 'string') {
+        raw = data;
+      } else if (data instanceof Buffer) {
+        raw = data.toString('utf-8');
+      } else {
+        console.warn('Type value not expected:', typeof data);
+        return;
+      }
+      const payload = JSON.parse(raw) as ResponseDataWebsocket;
+      const fundingRate = parseFloat(payload.data.r);
+      const fundingTime = payload.data.T;
+
+      const now = Date.now();
+      const oBefore = fundingTime - 3000;
+      const oAfter = fundingTime + 3000;
       const isPositive = fundingRate > 0;
-      const oBefore = beforeFunding - 3000;
-      const oAfter = beforeFunding + 3000;
 
       if (isPositive) {
-        if (oBefore > 0) {
-          setTimeout(
-            () =>
-              void this.placeOrder(
-                symbol,
-                Side.SELL,
-                positionSide.SHORT,
-                quantity,
-              ),
-            oBefore,
+        const delayShort = now - oBefore;
+        if (delayShort === 0) {
+          setTimeout(() => {
+            void this.placeOrder(
+              symbol,
+              Side.SELL,
+              positionSide.SHORT,
+              quantity,
+            );
+          }, delayShort);
+          this.logger.log(
+            `Order programed in SHORT three minutes before of funding ${new Date(payload.data.E).toLocaleString()} symbol: ${payload.data.s} price: ${payload.data.p}`,
           );
-          this.logger.log(`Order Created ${positionSide.SHORT}`);
         }
-      } else {
+      }
+      const delayLong = now - oAfter;
+      if (delayLong === 0) {
         setTimeout(() => {
           void this.placeOrder(symbol, Side.BUY, positionSide.LONG, quantity);
-          this.logger.log(`Order Created ${positionSide.LONG}`);
-        }, oAfter);
+        }, delayLong);
+        this.logger.log(
+          `Order programed in LONG three minutes after of funding ${new Date(payload.data.E).toLocaleString()} symbol: ${payload.data.s} price: ${payload.data.p}`,
+        );
       }
+
+      console.log(
+        `
+        Next Funding Time a las: ${new Date(fundingTime).toLocaleString()}
+        Funding Rate: ${(fundingRate * 100).toString()} %
+        `,
+      );
+      ws.close();
     });
 
     ws.on('close', () => {

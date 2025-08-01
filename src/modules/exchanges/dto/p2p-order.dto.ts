@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsEnum,
-  IsArray,
-  IsOptional,
-  Min,
-} from 'class-validator';
+import { IsString, IsNumber, IsArray, IsOptional, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class P2POrderDto {
@@ -42,7 +35,6 @@ export class P2POrderDto {
   maxLimit: number;
 
   @ApiProperty({ enum: ['BUY', 'SELL'] })
-  @IsEnum(['BUY', 'SELL'])
   tradeType: 'BUY' | 'SELL';
 
   @ApiProperty()

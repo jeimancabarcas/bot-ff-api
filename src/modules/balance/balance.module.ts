@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { BalanceService } from './balance.service';
+import { BalanceController } from './balance.controller';
 
 @Module({
-  controllers: [],
+  controllers: [BalanceController],
   providers: [BalanceService],
   exports: [BalanceService],
 })

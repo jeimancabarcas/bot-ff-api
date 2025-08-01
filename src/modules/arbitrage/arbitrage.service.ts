@@ -1,20 +1,12 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ArbitrageOpportunity } from '../database/entities/arbitrage-opportunity.entity';
 import { P2POrder } from '../database/entities/p2p-order.entity';
-import {
-  FundingFeeTypes,
-  OrderBookDtoResponse,
-  OrderBookResponseBinance,
-  OrdersBookAsk,
-  OrdersBookBids,
-} from '../exchanges/interfaces/binance.types.interface';
-import axios, { AxiosInstance } from 'axios';
-import { ExchangeConnectionException } from 'src/exceptions/exchange.exceptions';
-import { ResponseBybitfundingRate } from '../exchanges/interfaces/bybit.types.interface';
-import { EXCHANGES_CONFIG } from 'src/config/exchanges.config';
 import { ConfigService } from '@nestjs/config';
+import { OrderbookService } from '../orderbook/orderbook.service';
+import { BinanceService } from '../exchanges/services/binance.service';
+import { TradeType } from '../exchanges/interfaces/binance.types.interface';
 
 interface IArbitrageCalculation {
   asset: string;
@@ -34,8 +26,6 @@ export class ArbitrageService {
   [x: string]: any;
   private readonly logger = new Logger(ArbitrageService.name);
   private readonly MIN_PROFIT_THRESHOLD = 0.5; // 0.5% minimum profit
-  private readonly binanceSpot: AxiosInstance;
-  private readonly binanceFutures: AxiosInstance;
 
   constructor(
     @InjectRepository(ArbitrageOpportunity)
@@ -43,6 +33,8 @@ export class ArbitrageService {
     @InjectRepository(P2POrder)
     private readonly p2pOrderRepository: Repository<P2POrder>,
     private readonly configService: ConfigService,
+    private readonly orderBookService: OrderbookService,
+    private readonly binanceService: BinanceService,
   ) {}
 
   private calculateArbitrageOpportunities(
@@ -176,141 +168,28 @@ export class ArbitrageService {
       .getMany();
   }
 
-  async getFundingRateBinance(symbol: string): Promise<FundingFeeTypes> {
-    symbol = symbol.toUpperCase();
-    try {
-      const response = await axios.get<FundingFeeTypes[]>(
-        'https://fapi.binance.com/fapi/v1/fundingRate',
-        {
-          params: {
-            symbol: symbol,
-            limit: 1, // Última tasa de financiamiento
-          },
-        },
-      );
-
-      if (!response.data || response.data.length === 0) {
-        throw new ExchangeConnectionException(
-          `No funding rate data found for symbol: ${symbol}`,
-          new Error('Empty response'),
-        );
-      }
-
-      const data = response.data[0];
-
-      const fundingFee: FundingFeeTypes = {
-        symbol: data.symbol,
-        fundingRate: (Number(data.fundingRate) * 100).toFixed(4) + '%',
-        fundingTime: new Date(data.fundingTime).toLocaleString(),
-      };
-
-      return fundingFee;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new ExchangeConnectionException(
-          'Connection Failure Binance',
-          error,
-        );
-      } else {
-        throw new Error('Unknow Error');
-      }
-    }
-  }
-  async getFundingRateBybit(symbol: string): Promise<FundingFeeTypes> {
-    try {
-      symbol = symbol.toUpperCase();
-      const response = await axios.get<ResponseBybitfundingRate>(
-        'https://api.bybit.com/v5/market/funding/history',
-        {
-          params: {
-            category: 'linear',
-            limit: 1, // Última tasa de financiamiento
-            symbol: symbol,
-          },
-        },
-      );
-
-      const info = response.data.result.list[0];
-
-      if (!response.data.result || response.data.result.list.length === 0) {
-        throw new ExchangeConnectionException(
-          `No funding rate data found for symbol: ${symbol}`,
-          new Error('Empty response'),
-        );
-      }
-      const fundingFee: FundingFeeTypes = {
-        symbol: info.symbol,
-        fundingRate: (Number(info.fundingRate) * 100).toFixed(4) + '%',
-        fundingTime: new Date(
-          Number(info.fundingRateTimestamp),
-        ).toLocaleString(),
-      };
-      return fundingFee;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new ExchangeConnectionException(
-          'Connection Failure Bybit',
-          error,
-        );
-      } else {
-        throw new Error('Unknown Error');
-      }
-    }
-  }
-
-  async getOrderBookBinance(
+  async arbitrageOrderBookBybitVsSpotBinanceP2P(
+    asset: string,
     symbol: string,
-    limit: number,
-  ): Promise<OrderBookDtoResponse> {
-    try {
-      symbol = symbol.toUpperCase();
-      const response = await axios.get<OrderBookResponseBinance>(
-        `${EXCHANGES_CONFIG.binance.baseUrlFapi}/${EXCHANGES_CONFIG.binance.endPoints.orderBook}`,
-        {
-          params: { symbol, limit },
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      if (!response.data || !response.data.bids || !response.data.asks) {
-        throw new ExchangeConnectionException(
-          `No order book data found for symbol: ${symbol}`,
-          new Error('Empty response'),
-        );
-      }
-      const data: OrderBookResponseBinance = response.data;
+    fiat: string,
+    tradeType: TradeType,
+    rows: number,
+  ) {
+    const [book, p2pBuy, p2pSell] = await Promise.all([
+      this.orderBookService.getOrderBookBybit('linear', symbol, 1),
+      this.binanceService.getP2PBinancePrice(asset, fiat, tradeType.buy, rows),
+      this.binanceService.getP2PBinancePrice(asset, fiat, tradeType.sell, rows),
+    ]);
 
-      const bids: OrdersBookBids[] = data.bids.map((bid) => ({
-        USDTprice: Number(bid[0]),
-        BTCquantity: Number(bid[1]),
-      }));
-
-      const asks: OrdersBookAsk[] = data.asks.map((ask) => ({
-        USDTprice: Number(ask[0]),
-        BTCquantity: Number(ask[1]),
-      }));
-
-      const orderBookDto: OrderBookDtoResponse = {
-        lastUpdateId: data.lastUpdateId,
-        bids,
-        asks,
-        bestAsksWithoutSlippage: asks[0].USDTprice * asks[0].BTCquantity,
-        bestBidsWithoutSlippage: bids[0].USDTprice * bids[0].BTCquantity,
-      };
-
-      return orderBookDto;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new ExchangeConnectionException(
-          'Connection Failure Binance',
-          error,
-        );
-      } else {
-        throw new BadRequestException('Ocurrio un error inesperado');
-      }
-    }
+    const bestBid = book.bids[0][0];
+    const bestAsk = book.ask[0][0];
+    //const spotCopBid = Number(bestBid) * Number(p2pSell);
+    //const spotCopAsk = Number(bestAsk) * Number(p2pBuy);
+    return {
+      spotBidUSD: bestBid,
+      spotAskUSD: bestAsk,
+      p2pBuyCop: p2pBuy,
+      p2pSellCop: p2pSell,
+    };
   }
 }

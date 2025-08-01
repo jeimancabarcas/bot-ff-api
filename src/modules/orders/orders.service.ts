@@ -90,13 +90,13 @@ export class OrdersService {
       const fundingTime = payload.data.T;
 
       const now = Date.now();
-      const oBefore = fundingTime - 3000;
-      const oAfter = fundingTime + 3000;
+      const oBefore = fundingTime - now;
+      const oAfter = fundingTime - now;
       const isPositive = fundingRate > 0;
 
       if (isPositive) {
-        const delayShort = now - oBefore;
-        if (delayShort === 0) {
+        if (oBefore === 6000) {
+          const delayShort = oBefore - 3000;
           setTimeout(() => {
             void this.placeOrder(
               symbol,
@@ -110,8 +110,9 @@ export class OrdersService {
           );
         }
       }
-      const delayLong = now - oAfter;
-      if (delayLong === 0) {
+
+      if (oAfter === 0) {
+        const delayLong = oAfter + 3000;
         setTimeout(() => {
           void this.placeOrder(symbol, Side.BUY, positionSide.LONG, quantity);
         }, delayLong);
@@ -120,10 +121,11 @@ export class OrdersService {
         );
       }
 
-      console.log(
+      this.logger.log(
         `
         Next Funding Time a las: ${new Date(fundingTime).toLocaleString()}
-        Funding Rate: ${(fundingRate * 100).toString()} %
+        Funding Rate: ${(fundingRate * 100).toFixed(4).toString()} %
+        IsPositive: ${fundingRate > 0 ? 'Is positive' : 'Is negagive'}
         `,
       );
       ws.close();

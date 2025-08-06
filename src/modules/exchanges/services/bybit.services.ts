@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { P2POrdersResponseV5, RestClientV5 } from 'bybit-api';
+import { RestClientV5 } from 'bybit-api';
 
 @Injectable()
 export class BybitService {
@@ -11,17 +11,12 @@ export class BybitService {
     this.apiKey = configService.getOrThrow('');
     this.apiSecret = configService.getOrThrow('');
   }
-  async getOrdersP2PBybit8(
-    tokenId: string,
-    page: number,
-    size: number,
-  ): Promise<P2POrdersResponseV5> {
+  async getOrdersP2PBybit(tokenId: string, page: number, size: number) {
     const client = new RestClientV5({
       testnet: false,
       key: this.apiKey,
       secret: this.apiSecret,
     });
-
     const side = [0, 1];
     // Example parameters
     const params = {
@@ -32,13 +27,7 @@ export class BybitService {
     };
     try {
       const res = await client.getP2POrders(params);
-      if (!res.result || res.result.count === 0) {
-        throw new HttpException(
-          `Bybit content empty ${res.retCode}`,
-          HttpStatus.NO_CONTENT,
-        );
-      }
-      return res.result;
+      return res.result.items.map((it) => ({ side: it.side, price: it.price }));
     } catch (error) {
       throw new HttpException(
         `Bybit orders error: ${error}`,

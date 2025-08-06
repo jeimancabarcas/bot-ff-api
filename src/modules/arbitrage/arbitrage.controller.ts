@@ -1,26 +1,24 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Post,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ArbitrageService } from './arbitrage.service';
 import {
   ArbitrageOpportunityDto,
   ArbitrageQueryDto,
 } from './dto/arbitrage.opportunity.dto';
-import {
-  SUPPORTED_CRYPTOS,
-  SUPPORTED_FIATS,
-} from '../../config/exchanges.config';
+//import { QueryArbitrageBinanceP2PFutures } from '../exchanges/dto/arbitrage.query.dto.binance';
+import { BinanceService } from '../exchanges/services/binance.service';
+import { QueryP2PBinancePrice } from '../exchanges/dto/query.p2p.price';
+import { QueryFuturesBinanceBidAsk } from '../exchanges/dto/query.futures.bidask';
+import { QuerySpotBinancePrice } from '../exchanges/dto/query.spot.price';
+//import { ResponseArbitrageBinance } from '../exchanges/interfaces/binance.types.interface';
 
-@ApiTags('arbitrage')
+@ApiTags('Arbitrage')
 @Controller('arbitrage')
 export class ArbitrageController {
-  constructor(private readonly arbitrageService: ArbitrageService) {}
+  constructor(
+    private readonly arbitrageService: ArbitrageService,
+    private readonly binanceService: BinanceService,
+  ) {}
 
   @Get('opportunities')
   @ApiOperation({ summary: 'Get current arbitrage opportunities' })
@@ -58,36 +56,68 @@ export class ArbitrageController {
     );
   }
 
-  @Post('detect/:asset/:fiat')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Detect new arbitrage opportunities for specific asset/fiat pair',
-  })
+  //@Get('arbitrage-binance-p2pfutures')
+  //@ApiOperation({
+  //  summary: 'Arbitrage Binance: p2p - futures',
+  //})
+  //@ApiResponse({
+  //  status: 200,
+  //  description: 'Arbitrage Intra Exchange Binance',
+  //})
+  //async arbitrageBinanceP2PFutures(
+  //  @Query() query: QueryArbitrageBinanceP2PFutures,
+  //): Promise<ResponseArbitrageBinance> {
+  //  const { asset, fiat, symbol, tradeType } = query;
+  //  const p2pPrice = await this.binanceService.getP2PBinancePrice(
+  //    asset,
+  //    fiat,
+  //    tradeType,
+  //  );
+  //  const futures = await this.binanceService.getFuturesBinancePrice(symbol);
+
+  //  const profit =
+  //    (Number(futures.bidPrice) - p2pPrice.price / p2pPrice.price) * 100;
+  //  return {
+  //    p2pPrice: String(p2pPrice.price),
+  //    futuresPrice: String(futures.bidPrice),
+  //    profitEstimated: `${profit.toFixed(2)} %`,
+  //  };
+  //}
+
+  @Get('p2pBinancePrice/tradetype')
+  @ApiOperation({ summary: 'Get prices p2p BUY - SELL' })
   @ApiResponse({
     status: 200,
-    description: 'Newly detected arbitrage opportunities',
-    type: [ArbitrageOpportunityDto],
+    description: 'List prices p2p BUY - SELL',
   })
-  @Get('stats')
-  @ApiOperation({ summary: 'Get arbitrage statistics' })
-  @ApiResponse({ status: 200, description: 'Arbitrage statistics' })
-  @ApiQuery({
-    name: 'asset',
-    required: false,
-    description: 'Filter by crypto asset',
+  async getP2pPricesBinance(@Query() query: QueryP2PBinancePrice) {
+    const { asset, fiat, tradeType, rows } = query;
+    return await this.binanceService.getP2PBinancePrice(
+      asset,
+      fiat,
+      tradeType,
+      rows,
+    );
+  }
+  @Get('futuresBinancePrice/bid-ask')
+  @ApiOperation({ summary: 'Get prices futures Bid - Ask' })
+  @ApiResponse({
+    status: 200,
+    description: 'List prices futures Bid - Ask',
   })
-  @ApiQuery({
-    name: 'fiat',
-    required: false,
-    description: 'Filter by fiat currency',
+  async getFuturesPricesBinance(@Query() query: QueryFuturesBinanceBidAsk) {
+    const symbol = query.symbol;
+    return await this.binanceService.getFuturesBinancePrice(symbol);
+  }
+
+  @Get('spotBinancePrice')
+  @ApiOperation({ summary: 'Get price Spot binance' })
+  @ApiResponse({
+    status: 200,
+    description: 'Spot Price Binance',
   })
-  @Get('supported-assets')
-  @ApiOperation({ summary: 'Get supported crypto assets and fiat currencies' })
-  @ApiResponse({ status: 200, description: 'Supported assets and fiats' })
-  getSupportedAssets() {
-    return {
-      cryptos: SUPPORTED_CRYPTOS,
-      fiats: SUPPORTED_FIATS,
-    };
+  async getSpotPricesBinance(@Query() query: QuerySpotBinancePrice) {
+    const symbol = query.symbol;
+    return await this.binanceService.getSpotBinancePrice(symbol);
   }
 }

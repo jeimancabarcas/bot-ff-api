@@ -9,6 +9,8 @@ import { DatabaseConfig } from './config/database.config';
 import { BalanceModule } from './modules/balance/balance.module';
 import { FundingfeeModule } from './modules/fundingfee/fundingfee.module';
 import { OrderbookModule } from './modules/orderbook/orderbook.module';
+import { ProfitandlostModule } from './modules/profitandlost/profitandlost.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { OrderbookModule } from './modules/orderbook/orderbook.module';
     BalanceModule,
     FundingfeeModule,
     OrderbookModule,
+    ProfitandlostModule,
+    OrdersModule,
   ],
   providers: [],
 })

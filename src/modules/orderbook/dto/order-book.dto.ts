@@ -62,7 +62,7 @@ export class OrderBookQueryDtoBybit {
 export class OrderBookQueryDtoBitget {
   @ApiProperty({
     description: 'Type',
-    example: `spot | linear | inverse | option`,
+    example: `linear`,
   })
   @IsString()
   @IsOptional()

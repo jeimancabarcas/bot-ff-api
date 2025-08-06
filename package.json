@@ -32,6 +32,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/typeorm": "^11.0.0",
     "axios": "^1.10.0",
+    "binance": "^3.0.1",
     "bitget-api": "^2.3.6",
     "bybit-api": "^4.1.16",
     "ccxt": "^4.4.91",
@@ -41,7 +42,7 @@
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "ws": "^8.18.2"
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

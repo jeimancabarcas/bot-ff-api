@@ -1,9 +1,10 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { FundingfeeService } from './fundingfee.service';
-import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FundingFeeTypes } from '../exchanges/interfaces/binance.types.interface';
 import { QueryFundingBitgetDto } from './dto/bitget.query.dto';
 
+@ApiTags('FundingFee')
 @Controller('fundingfee')
 export class FundingfeeController {
   constructor(private readonly fundingfeeService: FundingfeeService) {}

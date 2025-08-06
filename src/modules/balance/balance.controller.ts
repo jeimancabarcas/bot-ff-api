@@ -9,7 +9,7 @@ import {
 } from './dto/query.wallet.dto';
 import { Wallet } from './interfaces/binance.types';
 
-@ApiTags('balances')
+@ApiTags('Balances')
 @Controller('balances')
 export class BalanceController {
   constructor(private readonly balanceService: BalanceService) {}

@@ -3,10 +3,12 @@ import { DatabaseModule } from '../database/database.module';
 import { ExchangesModule } from '../exchanges/exchanges.module';
 import { ArbitrageController } from './arbitrage.controller';
 import { ArbitrageService } from './arbitrage.service';
-
+import { BinanceService } from '../exchanges/services/binance.service';
+import { OrderbookModule } from '../orderbook/orderbook.module';
+import { OrderbookService } from '../orderbook/orderbook.service';
 @Module({
-  imports: [DatabaseModule, ExchangesModule],
-  providers: [ArbitrageService],
+  imports: [DatabaseModule, ExchangesModule, OrderbookModule],
+  providers: [ArbitrageService, BinanceService, OrderbookService],
   controllers: [ArbitrageController],
   exports: [ArbitrageService],
 })

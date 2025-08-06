@@ -11,6 +11,7 @@ export const EXCHANGES_CONFIG = {
       orderBook: 'fapi/v1/depth',
       balanceFuture: '/fapi/v2/account',
       balanceSpot: '/api/v3/account',
+      order: '/fapi/v1/order',
     },
   },
   bybit: {

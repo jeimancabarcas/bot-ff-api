@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { ArbitrageOpportunity } from '../database/entities/arbitrage-opportunity.entity';
 import { P2POrder } from '../database/entities/p2p-order.entity';
 import { ConfigService } from '@nestjs/config';
+import { OrderbookService } from '../orderbook/orderbook.service';
+import { BinanceService } from '../exchanges/services/binance.service';
+import { TradeType } from '../exchanges/interfaces/binance.types.interface';
 
 interface IArbitrageCalculation {
   asset: string;
@@ -30,6 +33,8 @@ export class ArbitrageService {
     @InjectRepository(P2POrder)
     private readonly p2pOrderRepository: Repository<P2POrder>,
     private readonly configService: ConfigService,
+    private readonly orderBookService: OrderbookService,
+    private readonly binanceService: BinanceService,
   ) {}
 
   private calculateArbitrageOpportunities(
@@ -161,5 +166,30 @@ export class ArbitrageService {
       .orderBy('opportunity.profitPercentage', 'DESC')
       .limit(limit)
       .getMany();
+  }
+
+  async arbitrageOrderBookBybitVsSpotBinanceP2P(
+    asset: string,
+    symbol: string,
+    fiat: string,
+    tradeType: TradeType,
+    rows: number,
+  ) {
+    const [book, p2pBuy, p2pSell] = await Promise.all([
+      this.orderBookService.getOrderBookBybit('linear', symbol, 1),
+      this.binanceService.getP2PBinancePrice(asset, fiat, tradeType.buy, rows),
+      this.binanceService.getP2PBinancePrice(asset, fiat, tradeType.sell, rows),
+    ]);
+
+    const bestBid = book.bids[0][0];
+    const bestAsk = book.ask[0][0];
+    //const spotCopBid = Number(bestBid) * Number(p2pSell);
+    //const spotCopAsk = Number(bestAsk) * Number(p2pBuy);
+    return {
+      spotBidUSD: bestBid,
+      spotAskUSD: bestAsk,
+      p2pBuyCop: p2pBuy,
+      p2pSellCop: p2pSell,
+    };
   }
 }

@@ -10,7 +10,7 @@ import {
 import { OrderBookResponse } from './interfaces/bybit.interfaces';
 import { OrderBookResponsBitget } from './interfaces/bitget.interfaces';
 
-@ApiTags('orderbook')
+@ApiTags('Orderbook')
 @Controller('orderbook')
 export class OrderbookController {
   constructor(private readonly orderbookService: OrderbookService) {}

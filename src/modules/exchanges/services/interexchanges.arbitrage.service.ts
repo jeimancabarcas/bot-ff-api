@@ -18,12 +18,10 @@ export class InterExchangeArbitrage {
   private readonly passPhraseBitget: string;
   constructor(private readonly configService: ConfigService) {
     if (EXCHANGES_CONFIG.binance.tesnet == true) {
-      this.apiKeyBin = this.configService.getOrThrow('BINANCE_TESTNET_API_KEY');
-      this.secretBin = this.configService.getOrThrow('BINANCE_TESTNET_SECRET');
+      this.apiKeyBin = this.configService.getOrThrow('BINANCE_API_KEY_TEST');
+      this.secretBin = this.configService.getOrThrow('BINANCE_API_SECRET_TEST');
       this.apiKeyByb = this.configService.getOrThrow('BYBIT_TESTNET_API_KEY');
       this.secretByb = this.configService.getOrThrow('BYBIT_TESTNET_SECRET');
-      this.binance.setSandboxMode(true);
-      this.bybit.setSandboxMode(true);
     } else {
       this.apiKeyBin = this.configService.getOrThrow('BINANCE_API_KEY');
       this.secretBin = this.configService.getOrThrow('BINANCE_API_SECRET');
@@ -43,6 +41,11 @@ export class InterExchangeArbitrage {
       enableRateLimit: true,
       options: { defaultType: 'future' },
     });
+
+    if (EXCHANGES_CONFIG.binance.tesnet === true) {
+      this.binance.setSandboxMode(true);
+      this.bybit.setSandboxMode(true);
+    }
   }
 
   // Función para verificar saldo en testnet

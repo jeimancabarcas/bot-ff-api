@@ -59,9 +59,9 @@ export class ArbitrageController {
     );
   }
 
-  @Get('ordersbooksexchanges')
+  @Get('ordersInterexchanges')
   @ApiOperation({
-    summary: 'Get Orders Books Binance - Bybit- Bitget',
+    summary: 'Create Orders interexchanges Binance - Bybit',
   })
   @ApiResponse({
     status: 200,

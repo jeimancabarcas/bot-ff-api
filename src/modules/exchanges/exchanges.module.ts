@@ -6,6 +6,6 @@ import { InterExchangeArbitrage } from './services/interexchanges.arbitrage.serv
 @Module({
   imports: [DatabaseModule],
   providers: [BinanceService, InterExchangeArbitrage],
-  exports: [],
+  exports: [InterExchangeArbitrage],
 })
 export class ExchangesModule {}

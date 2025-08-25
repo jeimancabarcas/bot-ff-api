@@ -10,6 +10,8 @@ import { BinanceService } from '../exchanges/services/binance.service';
 import { QueryP2PBinancePrice } from '../exchanges/dto/query.p2p.price';
 import { QueryFuturesBinanceBidAsk } from '../exchanges/dto/query.futures.bidask';
 import { QuerySpotBinancePrice } from '../exchanges/dto/query.spot.price';
+import { InterExchangeArbitrage } from '../exchanges/services/interexchanges.arbitrage.service';
+import { InterExchangeDto } from '../exchanges/dto/interexchange.query.dto';
 //import { ResponseArbitrageBinance } from '../exchanges/interfaces/binance.types.interface';
 
 @ApiTags('Arbitrage')
@@ -18,6 +20,7 @@ export class ArbitrageController {
   constructor(
     private readonly arbitrageService: ArbitrageService,
     private readonly binanceService: BinanceService,
+    private readonly interExchangesService: InterExchangeArbitrage,
   ) {}
 
   @Get('opportunities')
@@ -56,33 +59,21 @@ export class ArbitrageController {
     );
   }
 
-  //@Get('arbitrage-binance-p2pfutures')
-  //@ApiOperation({
-  //  summary: 'Arbitrage Binance: p2p - futures',
-  //})
-  //@ApiResponse({
-  //  status: 200,
-  //  description: 'Arbitrage Intra Exchange Binance',
-  //})
-  //async arbitrageBinanceP2PFutures(
-  //  @Query() query: QueryArbitrageBinanceP2PFutures,
-  //): Promise<ResponseArbitrageBinance> {
-  //  const { asset, fiat, symbol, tradeType } = query;
-  //  const p2pPrice = await this.binanceService.getP2PBinancePrice(
-  //    asset,
-  //    fiat,
-  //    tradeType,
-  //  );
-  //  const futures = await this.binanceService.getFuturesBinancePrice(symbol);
-
-  //  const profit =
-  //    (Number(futures.bidPrice) - p2pPrice.price / p2pPrice.price) * 100;
-  //  return {
-  //    p2pPrice: String(p2pPrice.price),
-  //    futuresPrice: String(futures.bidPrice),
-  //    profitEstimated: `${profit.toFixed(2)} %`,
-  //  };
-  //}
+  @Get('ordersbooksexchanges')
+  @ApiOperation({
+    summary: 'Get Orders Books Binance - Bybit- Bitget',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Arbitrage Interexchanges',
+  })
+  async ordersInterExchanges(@Query() query: InterExchangeDto) {
+    const { symbol, asset } = query;
+    return await this.interExchangesService.fetchOrderBooksAndTrade(
+      symbol,
+      asset,
+    );
+  }
 
   @Get('p2pBinancePrice/tradetype')
   @ApiOperation({ summary: 'Get prices p2p BUY - SELL' })

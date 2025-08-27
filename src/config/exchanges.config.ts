@@ -13,6 +13,9 @@ export const EXCHANGES_CONFIG = {
       balanceSpot: '/api/v3/account',
       order: 'fapi/v1/order',
     },
+    baseUrlFuturesMainnet: 'https://fapi.binance.com/fapi/v1/order',
+    baseUrlFuturesTestnet: 'https://testnet.binancefuture.com/fapi/v1/order',
+    tesnet: true,
   },
   bybit: {
     name: 'Bybit',

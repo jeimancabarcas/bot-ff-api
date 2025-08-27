@@ -9,15 +9,45 @@ export enum positionSide {
 }
 
 export interface ResponseDataWebsocket {
-  stream: string;
-  data: {
-    e: string;
-    E: number;
-    s: string;
-    p: string;
-    P: string;
-    i: string;
-    r: string;
-    T: number;
-  };
+  r: string;
+  T: number;
+  E: number;
+  s: string;
+  p: string;
+}
+export enum TimeInForce {
+  GTC = 'GTC',
+  IOC = 'IOC',
+  FOK = 'FOK',
+}
+export enum OrderType {
+  MARKET = 'MARKET',
+  LIMIT = 'LIMIT',
+}
+
+export interface OrderCreated {
+  orderId: number;
+  symbol: string;
+  status: string;
+  clientOrderId: string;
+  price: string;
+  avgPrice: string;
+  origQty: string;
+  executedQty: string;
+  cumQty: string;
+  cumQuote: string;
+  timeInForce: string;
+  type: string;
+  reduceOnly: false;
+  closePosition: false;
+  side: string;
+  positionSide: string;
+  stopPrice: string;
+  workingType: string;
+  priceProtect: false;
+  origType: string;
+  priceMatch: string;
+  selfTradePreventionMode: string;
+  goodTillDate: number;
+  updateTime: number;
 }

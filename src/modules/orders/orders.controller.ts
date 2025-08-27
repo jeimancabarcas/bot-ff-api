@@ -14,8 +14,13 @@ export class OrdersController {
     description: 'Start WebSocket Binance, created order futures',
   })
   startWebSocketOrder(@Query() query: QueryOrderFutures) {
-    const { symbol, quantity } = query;
-    return this.ordersService.startWebsocketOrder(symbol, quantity);
+    const { symbol, quantity, type, timeInForce } = query;
+    return this.ordersService.startWebsocketOrder(
+      symbol,
+      quantity,
+      type,
+      timeInForce,
+    );
   }
 
   @Get('webSocket/stop')
